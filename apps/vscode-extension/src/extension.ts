@@ -43,6 +43,14 @@ async function joinTeam() {
   connect(data.project_id, data.team_code, userName); vscode.window.showInformationMessage(`Connected to OneContext Live: ${data.project_id}`);
 }
 
+async function configureGatewayKey() {
+  const key = await vscode.window.showInputBox({ prompt: "Enter the OneContext gateway key", password: true, ignoreFocusOut: true });
+  if (key === undefined) return;
+  if (key.trim()) await extensionContext.secrets.store("onecontext.gatewayKey", key.trim());
+  else await extensionContext.secrets.delete("onecontext.gatewayKey");
+  vscode.window.showInformationMessage("OneContext gateway key saved securely for handoffs.");
+}
+
 function queueAutomaticIntent(reason: "active file" | "saved file") {
   if (!vscode.workspace.getConfiguration("onecontext").get<boolean>("automaticPresence", true)) return;
   if (automaticIntentTimer) clearTimeout(automaticIntentTimer);
@@ -61,7 +69,39 @@ function connect(projectId: string, teamCode: string, userName: string) {
 }
 
 async function startTask() { if (!socket || socket.readyState !== WebSocket.OPEN) return vscode.window.showWarningMessage("Join a OneContext team first."); const summary = await vscode.window.showInputBox({ prompt: "What are you about to work on?", placeHolder: "Refactoring JWT token expiry logic", ignoreFocusOut: true }); if (summary) { manualTaskSummary = summary; send("intent:start", { file_path: currentFile(), intent_summary: summary }); } }
-async function completeTask() { if (!socket || socket.readyState !== WebSocket.OPEN) return vscode.window.showWarningMessage("Join a OneContext team first."); const summary = await vscode.window.showInputBox({ prompt: "What did you complete? OneContext will save this as a shared handoff.", value: manualTaskSummary || "Completed work in this area", ignoreFocusOut: true }); if (!summary) return; send("intent:complete", { file_path: currentFile(), intent_summary: summary }); manualTaskSummary = ""; }
+async function saveHandoff(prompt: string, answer: string) {
+  if (!joinedProjectId) return false;
+  try {
+    const gatewayKey = await extensionContext.secrets.get("onecontext.gatewayKey");
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (gatewayKey) headers["x-onecontext-key"] = gatewayKey;
+    const response = await fetch(`${apiBase()}/api/v1/gateway/handoff`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ project_id: joinedProjectId, provider: "vscode", prompt, answer }),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function completeTask() {
+  if (!socket || socket.readyState !== WebSocket.OPEN) return vscode.window.showWarningMessage("Join a OneContext team first.");
+  const summary = await vscode.window.showInputBox({ prompt: "What did you complete? OneContext will save this as a shared handoff.", value: manualTaskSummary || "Completed work in this area", ignoreFocusOut: true });
+  if (!summary) return;
+  const details = await vscode.window.showInputBox({ prompt: "Optional details for the next teammate (handoff note)", placeHolder: "Describe next steps, risks, or related files.", ignoreFocusOut: true });
+  const handoffPrompt = summary;
+  const handoffAnswer = details?.trim() ? details.trim() : `Completed work in ${currentFile()}.`;
+  const handoffSaved = await saveHandoff(handoffPrompt, handoffAnswer);
+  send("intent:complete", { file_path: currentFile(), intent_summary: summary });
+  manualTaskSummary = "";
+  if (handoffSaved) {
+    vscode.window.showInformationMessage("Task completed and handoff saved to OneContext.");
+  } else {
+    vscode.window.showWarningMessage("Task completed, but handoff could not be saved automatically.");
+  }
+}
 function leaveTeam() { send("intent:end"); socket?.close(); presence = []; manualTaskSummary = ""; view.refresh([], ""); status.text = "$(plug) Join OneContext Team"; status.command = "onecontext.joinTeam"; }
 
 async function askCodex() {
@@ -106,7 +146,7 @@ function escapeHtml(value: string) { return value.replace(/[&<>"']/g, (character
 
 export function activate(context: vscode.ExtensionContext) {
   extensionContext = context; status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 50); status.text = "$(plug) Join OneContext Team"; status.command = "onecontext.joinTeam"; status.show(); view = new PresenceView();
-  context.subscriptions.push(status, vscode.commands.registerCommand("onecontext.joinTeam", joinTeam), vscode.commands.registerCommand("onecontext.startTask", startTask), vscode.commands.registerCommand("onecontext.completeTask", completeTask), vscode.commands.registerCommand("onecontext.leaveTeam", leaveTeam), vscode.commands.registerCommand("onecontext.askCodex", askCodex), vscode.window.registerWebviewViewProvider("onecontextPresence", view), vscode.window.onDidChangeActiveTextEditor(() => queueAutomaticIntent("active file")), vscode.workspace.onDidSaveTextDocument((document) => { send("file:saved", { file_path: vscode.workspace.asRelativePath(document.uri) }); queueAutomaticIntent("saved file"); }));
+  context.subscriptions.push(status, vscode.commands.registerCommand("onecontext.joinTeam", joinTeam), vscode.commands.registerCommand("onecontext.startTask", startTask), vscode.commands.registerCommand("onecontext.completeTask", completeTask), vscode.commands.registerCommand("onecontext.configureGatewayKey", configureGatewayKey), vscode.commands.registerCommand("onecontext.leaveTeam", leaveTeam), vscode.commands.registerCommand("onecontext.askCodex", askCodex), vscode.window.registerWebviewViewProvider("onecontextPresence", view), vscode.window.onDidChangeActiveTextEditor(() => queueAutomaticIntent("active file")), vscode.workspace.onDidSaveTextDocument((document) => { send("file:saved", { file_path: vscode.workspace.asRelativePath(document.uri) }); queueAutomaticIntent("saved file"); }));
   const teamCode = context.secrets.get("onecontext.teamCode"); const projectId = context.secrets.get("onecontext.projectId"); const userName = context.secrets.get("onecontext.userName"); Promise.all([teamCode, projectId, userName]).then(([storedCode, storedProject, storedName]) => { if (storedCode && storedProject && storedName) { joinedProjectId = storedProject; joinedTeamCode = storedCode; connect(storedProject, storedCode, storedName); } }); void observeGitCommits();
   const heartbeat = setInterval(() => send("intent:heartbeat"), 60_000); context.subscriptions.push({ dispose: () => { clearInterval(heartbeat); if (automaticIntentTimer) clearTimeout(automaticIntentTimer); } });
 }

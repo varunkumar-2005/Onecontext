@@ -2,7 +2,7 @@
   "name": "onecontext-vscode",
   "displayName": "OneContext Live",
   "description": "Shared project memory and live teammate presence for OneContext.",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "publisher": "onecontext-local",
   "engines": { "vscode": "^1.105.0" },
   "categories": ["Other"],
@@ -14,6 +14,7 @@
       { "command": "onecontext.joinTeam", "title": "OneContext: Join Team" },
       { "command": "onecontext.startTask", "title": "OneContext: Start Task" },
       { "command": "onecontext.completeTask", "title": "OneContext: Complete Task and Save Handoff" },
+      { "command": "onecontext.configureGatewayKey", "title": "OneContext: Configure Gateway Key" },
       { "command": "onecontext.leaveTeam", "title": "OneContext: Leave Team" },
       { "command": "onecontext.askCodex", "title": "OneContext: Ask Codex with Team Context" }
     ],

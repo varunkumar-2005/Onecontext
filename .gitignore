@@ -30,6 +30,7 @@ coverage/
 .onecontext/live-context.md
 .cursor/rules/onecontext-live.md
 .windsurf/rules/onecontext-live.md
+CLAUDE.md
 apps/vscode-extension/dist/
 
 # Logs and operating-system files
