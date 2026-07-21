@@ -21,31 +21,36 @@ function writeMessage(message, framed) {
 
 function response(id, result, framed) { writeMessage({ jsonrpc: "2.0", id, result }, framed); }
 function error(id, message, framed) { writeMessage({ jsonrpc: "2.0", id, error: { code: -32603, message } }, framed); }
+async function readJsonResponse(result) {
+  const text = await result.text();
+  if (!text.trim()) throw new Error(`OneContext API returned an empty response (HTTP ${result.status}) from ${result.url}`);
+  let data;
+  try { data = JSON.parse(text); } catch { throw new Error(`OneContext API returned invalid JSON (HTTP ${result.status}) from ${result.url}: ${text.slice(0, 200)}`); }
+  if (!result.ok) throw new Error(data.error?.message || `OneContext API request failed (HTTP ${result.status})`);
+  return data;
+}
 
 async function callTool(name, input = {}) {
   if (name === "onecontext_get_context") {
     const prompt = String(input.prompt || "").trim();
     if (!prompt) throw new Error("prompt is required");
     const result = await fetch(`${baseUrl}/api/v1/gateway/codex/inject`, { method: "POST", headers, body: JSON.stringify({ project_id: input.project_id || projectId, raw_prompt: prompt }) });
-    const data = await result.json();
-    if (!result.ok) throw new Error(data.error?.message || "Context retrieval failed");
+    const data = await readJsonResponse(result);
     return data.augmented_prompt;
   }
   if (name === "onecontext_publish_update") {
     const result = await fetch(`${baseUrl}/api/v1/gateway/agent-update`, { method: "POST", headers, body: JSON.stringify({ project_id: input.project_id || projectId, agent: input.agent || "codex", summary: input.summary, files: input.files || [], status: input.status || "in_progress" }) });
-    const data = await result.json();
-    if (!result.ok) throw new Error(data.error?.message || "Update could not be saved");
+    const data = await readJsonResponse(result);
     return "Shared update saved to OneContext.";
   }
   if (name === "onecontext_save_handoff") {
     const result = await fetch(`${baseUrl}/api/v1/gateway/agent-update`, { method: "POST", headers, body: JSON.stringify({ project_id: input.project_id || projectId, agent: input.agent || "codex", summary: input.summary || "Completed agent handoff", files: input.files || [], status: "handoff", prompt: input.prompt, answer: input.answer, conversation_id: input.conversation_id || "mcp-handoff" }) });
-    const data = await result.json();
-    if (!result.ok) throw new Error(data.error?.message || "Handoff could not be saved");
+    const data = await readJsonResponse(result);
     return "Handoff distilled into shared memory for the next teammate or agent.";
   }
   if (name === "onecontext_check_conflicts") {
     const result = await fetch(`${process.env.ONECONTEXT_REALTIME_HTTP_URL || "http://localhost:8787"}/presence?project_id=${encodeURIComponent(input.project_id || projectId)}`);
-    const data = await result.json();
+    const data = await readJsonResponse(result);
     return JSON.stringify(data.active_intents || [], null, 2);
   }
   throw new Error(`Unknown tool: ${name}`);
