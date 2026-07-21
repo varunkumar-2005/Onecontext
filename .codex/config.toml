@@ -1,0 +1,3 @@
+[mcp_servers.onecontext]
+command = "node"
+args = ["scripts/onecontext-mcp.mjs"]

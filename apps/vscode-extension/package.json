@@ -1,0 +1,36 @@
+{
+  "name": "onecontext-vscode",
+  "displayName": "OneContext Live",
+  "description": "Shared project memory and live teammate presence for OneContext.",
+  "version": "0.1.0",
+  "publisher": "onecontext-local",
+  "engines": { "vscode": "^1.105.0" },
+  "categories": ["Other"],
+  "files": ["dist/**", "package.json", "README.md", "node_modules/ws/**"],
+  "main": "./dist/extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "commands": [
+      { "command": "onecontext.joinTeam", "title": "OneContext: Join Team" },
+      { "command": "onecontext.startTask", "title": "OneContext: Start Task" },
+      { "command": "onecontext.completeTask", "title": "OneContext: Complete Task and Save Handoff" },
+      { "command": "onecontext.leaveTeam", "title": "OneContext: Leave Team" },
+      { "command": "onecontext.askCodex", "title": "OneContext: Ask Codex with Team Context" }
+    ],
+    "configuration": {
+      "title": "OneContext",
+      "properties": {
+        "onecontext.automaticPresence": { "type": "boolean", "default": true, "description": "Automatically broadcast active-editor and saved-file work after a short delay." },
+        "onecontext.apiBaseUrl": { "type": "string", "default": "http://localhost:3000", "description": "OneContext API URL" },
+        "onecontext.realtimeUrl": { "type": "string", "default": "ws://localhost:8787/live", "description": "OneContext realtime WebSocket URL" },
+        "onecontext.projectRoot": { "type": "string", "default": "", "description": "Absolute OneContext project root when the extension is installed outside the repository" },
+        "onecontext.codexCommand": { "type": "string", "default": "", "description": "Terminal-callable Codex command. Leave empty to preview enriched context." },
+        "onecontext.codexArgs": { "type": "string", "default": "exec", "description": "Arguments passed to the configured Codex command" }
+      }
+    },
+    "views": { "explorer": [{ "id": "onecontextPresence", "name": "OneContext Team", "type": "webview" }] }
+  },
+  "scripts": { "compile": "tsc -p .", "package": "npm run compile && npx @vscode/vsce package" },
+  "dependencies": { "ws": "^8.18.3" },
+  "devDependencies": { "@types/node": "^20.14.15", "@types/vscode": "^1.105.0", "@types/ws": "^8.18.1", "typescript": "^5.5.4" }
+}

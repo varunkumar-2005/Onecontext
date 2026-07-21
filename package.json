@@ -1,0 +1,36 @@
+{
+  "name": "onecontext",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:init": "node scripts/init-db.mjs",
+    "test": "tsx --test src/lib/*.test.ts",
+    "realtime": "tsx apps/realtime-sync/src/server.ts",
+    "vscode:compile": "tsc -p apps/vscode-extension"
+    ,"onecontext:agent": "node scripts/onecontext-agent.mjs",
+    "onecontext:codex": "node scripts/onecontext-agent.mjs codex",
+    "demo:teammate": "node scripts/onecontext-demo-teammate.mjs"
+  },
+  "dependencies": {
+    "ioredis": "^5.11.1",
+    "next": "14.2.32",
+    "pg": "^8.22.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "ws": "^8.21.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.15",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/vscode": "^1.125.0",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.23.1",
+    "typescript": "^5.5.4"
+  }
+}

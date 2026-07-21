@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "onecontext": { "command": "node", "args": ["scripts/onecontext-mcp.mjs"] }
+  }
+}

@@ -1,0 +1,5 @@
+import { NextResponse } from "next/server";
+import { getDatabase } from "@/lib/db";
+import { listDatabaseTimeline } from "@/lib/persistent-store";
+import { getProject, listDecisions } from "@/lib/store";
+export async function GET(_request: Request, { params }: { params: { id: string } }) { if (getDatabase()) return NextResponse.json({ events: await listDatabaseTimeline(params.id) }); const project = getProject(params.id); if (!project) return NextResponse.json({ error: { code: "PROJECT_NOT_FOUND", message: "Project was not found." } }, { status: 404 }); const sourceEvents = project.sources.map((source) => ({ id: source.id, type: "source", title: `Indexed ${source.name}`, detail: `${source.status} source added to project memory`, createdAt: source.lastIndexedAt ?? source.createdAt })); return NextResponse.json({ events: [...sourceEvents, ...listDecisions(params.id).map((decision) => ({ id: decision.id, type: "decision", title: decision.title, detail: decision.rationale, createdAt: decision.createdAt }))].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()) }); }

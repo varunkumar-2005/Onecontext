@@ -1,0 +1,3 @@
+import { NextResponse } from "next/server";
+import { authenticate, createSession } from "@/lib/auth";
+export async function POST(request: Request) { const body = await request.json() as { email?: string; password?: string }; const user = body.email && body.password ? await authenticate(body.email.trim().toLowerCase(), body.password) : undefined; if (!user) return NextResponse.json({ error: { code: "INVALID_CREDENTIALS", message: "Email or password is incorrect." } }, { status: 401 }); const response = NextResponse.json({ user }); response.cookies.set("onecontext_session", await createSession(user.id), { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 24 * 7, path: "/" }); return response; }

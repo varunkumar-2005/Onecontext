@@ -1,0 +1,8 @@
+import { NextResponse } from "next/server";
+import { getUserFromToken } from "@/lib/auth";
+import { listActivity, recordActivity } from "@/lib/persistent-store";
+import { getDatabase } from "@/lib/db";
+
+async function user(request: Request) { return getUserFromToken(request.headers.get("cookie")?.match(/onecontext_session=([^;]+)/)?.[1]); }
+export async function GET(request: Request, { params }: { params: { id: string } }) { if (!await user(request)) return NextResponse.json({ error: { code: "UNAUTHENTICATED", message: "Sign in required." } }, { status: 401 }); return NextResponse.json({ events: getDatabase() ? await listActivity(params.id) : [] }); }
+export async function POST(request: Request, { params }: { params: { id: string } }) { const current = await user(request); if (!current) return NextResponse.json({ error: { code: "UNAUTHENTICATED", message: "Sign in required." } }, { status: 401 }); const body = await request.json() as { agent?: string; event_type?: string; prompt?: string; answer?: string; summary?: string; file_paths?: string[]; metadata?: Record<string, unknown> }; if (!body.event_type || !body.summary?.trim()) return NextResponse.json({ error: { code: "ACTIVITY_REQUIRED", message: "An event type and summary are required." } }, { status: 400 }); if (!getDatabase()) return NextResponse.json({ event: { ...body, userId: current.id, projectId: params.id, createdAt: new Date().toISOString() } }, { status: 201 }); return NextResponse.json({ event: await recordActivity(params.id, { ...body, userId: current.id, eventType: body.event_type, summary: body.summary.trim() }) }, { status: 201 }); }

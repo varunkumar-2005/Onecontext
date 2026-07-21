@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "OneContext — Project memory for every AI",
+  "version": "0.1.0",
+  "description": "Inject relevant OneContext project memory into ChatGPT and Claude.",
+  "permissions": ["storage"],
+  "host_permissions": ["http://localhost:3000/*", "https://*.onecontext.local/*"],
+  "action": { "default_title": "OneContext settings", "default_popup": "popup.html" },
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [{
+    "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*", "https://claude.ai/*"],
+    "js": ["content.js"],
+    "css": ["content.css"],
+    "run_at": "document_idle"
+  }]
+}

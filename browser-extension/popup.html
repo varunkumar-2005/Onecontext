@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OneContext</title><link rel="stylesheet" href="popup.css"></head>
+  <body>
+    <main>
+      <div class="brand"><span>◒</span><strong>OneContext</strong></div>
+      <p class="tagline">Shared project memory for every AI.</p>
+      <label>API URL<input id="apiUrl" value="http://localhost:3000"></label>
+      <label>Project ID<input id="projectId" value="atlas-project"></label>
+      <label>Gateway key<input id="gatewayKey" type="password" placeholder="Paste the value after ONECONTEXT_GATEWAY_KEY="></label>
+      <div class="status"><i></i><span id="statusText">Ready to connect</span></div>
+      <button id="save">Save & verify</button>
+      <p class="hint">Open ChatGPT or Claude after saving. Use the purple Context button beside the prompt.</p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>
