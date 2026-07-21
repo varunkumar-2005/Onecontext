@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "onecontext": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["scripts/onecontext-mcp.mjs"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}
