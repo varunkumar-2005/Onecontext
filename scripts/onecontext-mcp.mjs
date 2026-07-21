@@ -1,6 +1,10 @@
 import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-if (fs.existsSync(".env.local")) for (const line of fs.readFileSync(".env.local", "utf8").split(/\r?\n/)) {
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const envPath = path.join(repositoryRoot, ".env.local");
+if (fs.existsSync(envPath)) for (const line of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
   const match = line.match(/^([A-Z0-9_]+)=(.*)$/);
   if (match && !process.env[match[1]]) process.env[match[1]] = match[2];
 }
