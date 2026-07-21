@@ -6,6 +6,10 @@
 
 OneContext helps a team of developers keep ChatGPT, Claude, Codex, GitHub Copilot, Cursor, and VS Code aligned around the same project. It stores useful project knowledge, retrieves only relevant context, shows live teammate intent, and warns when parallel work may overlap.
 
+## Demo video
+
+[Watch the OneContext demo on YouTube](https://www.youtube.com/watch?v=u8SC5cXMLcU)
+
 ## The problem
 
 When four developers work on one repository with different AI assistants, each assistant sees a different conversation history. Important decisions stay trapped in one chat, teammates repeat work, and two people can unknowingly edit the same area.
@@ -598,4 +602,4 @@ This is a working local MVP intended for evaluation and demonstration.
 
 ## License
 
-Add the license required by your submission and repository policy before making the repository public. MIT is a common choice for hackathon projects, but choose the terms that match your intended distribution.
+OneContext is released under the MIT License. See [LICENSE](LICENSE) for the full terms.
